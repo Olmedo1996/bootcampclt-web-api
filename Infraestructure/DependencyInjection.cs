@@ -1,11 +1,9 @@
 ﻿using Core.Interfaces.Repositories;
+using Infraestructure.Contexts;
 using Infraestructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infraestructure;
 
@@ -14,6 +12,17 @@ public static class DependencyInjection
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         services.AddScoped<ICustomerRepository, CustomerReporistory>();
+        return services;
+    }
+
+    public static IServiceCollection AddDataBase(
+        this IServiceCollection services,
+        IConfiguration configuration) {
+        var connectionString = configuration.GetConnectionString("Bootcamp");
+
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
         return services;
     }
 }
