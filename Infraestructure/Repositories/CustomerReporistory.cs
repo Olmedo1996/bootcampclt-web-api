@@ -1,54 +1,86 @@
-﻿using Core.Entities;
+﻿using Core.DTOs;
+using Core.Entities;
 using Core.Interfaces.Repositories;
+using Infraestructure.Contexts;
+using Microsoft.EntityFrameworkCore;
 
-namespace Infraestructure.Repositories
+namespace Infraestructure.Repositories;
+
+public class CustomerRepository : ICustomerRepository
 {
-    public class CustomerReporistory : ICustomerRepository
+    private readonly ApplicationDbContext _context;
+
+    public CustomerRepository(ApplicationDbContext context)
     {
-        private static List<Customer> _customers = [
-            new() { Id= 1, Name="Jose", Address="San Lorenzo", City="Asuncion"}, 
-            new() { Id= 2, Name="Fernando", Address="San Antonio", City="Luque"},
-            new() { Id= 3, Name="Jonh", Address="Jara", City="Capiata"}
-        ];
-
-        public List<Customer> List()
-        {
-            return _customers;
-        }
-
-        public void Add(Customer customer)
-        {
-            customer.Id = _customers.Count > 0 ? _customers.Max(c => c.Id)+1 : 1;
-            _customers.Add(customer);
-        }
-
-        public bool Update(Customer customer) {
-            var existingCustomer = GetById(customer.Id);
-            if (existingCustomer == null) { 
-                return false;
-            }
-
-            existingCustomer.Name = customer.Name;
-            existingCustomer.Address = customer.Address;
-            existingCustomer.City = customer.City;
-
-            return true;
-        }
-
-        public Customer? GetById(int id)
-        {
-            return _customers.FirstOrDefault(c => c.Id == id);
-        }
-
-        public bool Delete(int id) {
-            var customer = GetById(id);
-            if (customer == null)
-            {
-                return false;
-            }
-            _customers.Remove(customer);
-            return true;
-        }
+        _context = context;
     }
 
+    // Método para listar todos los clientes
+    public async Task<List<CustomerDTO>> List()
+    {
+        var entities = await _context.Customers.ToListAsync();
+        var dtos = entities.Select(customer => new CustomerDTO
+        {
+            Id = customer.Id,
+            Name = customer.Name,
+            Address = customer.Address,
+            City = customer.City,
+        });
+        return dtos.ToList();
+    }
+
+    // Método para agregar un nuevo cliente
+    public async Task Add(CustomerDTO customerDto)
+    {
+        var customer = new Customer
+        {
+            Name = customerDto.Name,
+            Address = customerDto.Address,
+            City = customerDto.City,
+        };
+
+        await _context.Customers.AddAsync(customer);
+        await _context.SaveChangesAsync();
+    }
+
+    // Método para obtener un cliente por su ID
+    public async Task<CustomerDTO?> GetById(int id)
+    {
+        var customer = await _context.Customers.FindAsync(id);
+        if (customer == null) return null;
+
+        return new CustomerDTO
+        {
+            Id = customer.Id,
+            Name = customer.Name,
+            Address = customer.Address,
+            City = customer.City,
+        };
+    }
+
+
+    public async Task<bool> Update(CustomerDTO customerDto)
+    {
+        var customer = await _context.Customers.FindAsync(customerDto.Id);
+        if (customer == null) return false;
+
+        customer.Id = customerDto.Id;
+        customer.Name = customerDto.Name;
+        customer.Address = customerDto.Address;
+        customer.City = customerDto.City;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // Método para eliminar un cliente por su ID
+    public async Task<bool> Delete(int id)
+    {
+        var customer = await _context.Customers.FindAsync(id);
+        if (customer == null) return false;
+
+        _context.Customers.Remove(customer);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

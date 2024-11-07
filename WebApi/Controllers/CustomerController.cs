@@ -1,4 +1,5 @@
-﻿using Core.Entities;
+﻿using Core.DTOs;
+using Core.Entities;
 using Core.Interfaces.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,23 +16,24 @@ public class CustomerController: BaseApiController
     }
 
     [HttpGet("List")]
-    public IActionResult List()
+    public async Task<IActionResult> List()
     {
-        return Ok(_customerRepository.List());
+        var customers = await _customerRepository.List();
+        return Ok(customers);
     }
 
     [HttpPost]
-    public IActionResult Add([FromBody] Customer customer)
+    public async Task<IActionResult> Add([FromBody] CustomerDTO customerDto)
     {
-        _customerRepository.Add(customer);
-        return CreatedAtAction(nameof(List), new { id = customer.Id }, customer);
+        await _customerRepository.Add(customerDto);
+        return CreatedAtAction(nameof(Get), new { id = customerDto.Id }, customerDto);
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] Customer customer)
+    public async Task<IActionResult> Update(int id, [FromBody] CustomerDTO customerDto)
     {
-        customer.Id = id;
-        var updated = _customerRepository.Update(customer);
+        customerDto.Id = id;
+        var updated = await _customerRepository.Update(customerDto);
         if (!updated)
         {
             return NotFound();
@@ -41,22 +43,21 @@ public class CustomerController: BaseApiController
     }
 
     [HttpGet("{id}")]
-    public IActionResult Get([FromRoute] int id)
+    public async Task<IActionResult> Get([FromRoute] int id)
     {
-        var customer = _customerRepository.GetById(id);
+        var customer = await _customerRepository.GetById(id);
 
         if (customer == null)
         {
             return NotFound();
         }
         return Ok(customer);
-
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        var deleted = _customerRepository.Delete(id);
+        var deleted = await _customerRepository.Delete(id);
         if (!deleted)
         {
             return NotFound();
