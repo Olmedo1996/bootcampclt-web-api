@@ -1,4 +1,8 @@
+using Core.Entities;
+using FluentValidation;
 using Infraestructure;
+using WebApi;
+using WebApi.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +14,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddRepositories();
 builder.Services.AddDataBase(builder.Configuration);
+builder.Services.AddWebApi(builder.Configuration);
 
 var app = builder.Build();
 
@@ -25,3 +30,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

@@ -1,6 +1,7 @@
 ﻿using Core.DTOs;
 using Core.Entities;
 using Core.Interfaces.Repositories;
+using Core.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers;
@@ -16,28 +17,31 @@ public class CustomerController: BaseApiController
     }
 
     [HttpGet("List")]
-    public async Task<IActionResult> List()
+    public async Task<IActionResult> List([FromQuery] PaginationRequest request, CancellationToken cancellationToke)
     {
-        var customers = await _customerRepository.List();
+        var page =  request.Page ?? 1;
+        var pageSize = request.PageSize ?? 10;
+        var customers = await _customerRepository.List(request, cancellationToke);
         return Ok(customers);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Add([FromBody] CustomerDTO customerDto)
+    public async Task<IActionResult> Add([FromBody] CustomerCreateDTO request)
     {
-        await _customerRepository.Add(customerDto);
-        return CreatedAtAction(nameof(Get), new { id = customerDto.Id }, customerDto);
+        //await _customerRepository.Add(customerDto);
+        //return CreatedAtAction(nameof(Get), new { id = customerDto.Id }, customerDto);
+        await _customerRepository.Add(request);
+        return Ok();
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] CustomerDTO customerDto)
+    public async Task<IActionResult> Update(int id, [FromBody] CustomerUpdateDTO request)
     {
-        customerDto.Id = id;
-        var updated = await _customerRepository.Update(customerDto);
-        if (!updated)
-        {
-            return NotFound();
-        }
+        if (id != request.Id)
+            return BadRequest("El ID de la URL no coincide con el ID del cuerpo.");
+
+        var result = await _customerRepository.Update(request);
+        if (!result) return NotFound();
 
         return NoContent();
     }
